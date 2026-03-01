@@ -1,19 +1,28 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 import {
     Home, Trees, Construction, LayoutGrid,
-    Box, Zap, Settings, ShieldCheck,
-    LogOut, UserCircle, X
+    Box, Zap, Settings, LogOut, UserCircle, X, LogIn
 } from 'lucide-react';
 
 export default function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean, setIsOpen: (val: boolean) => void }) {
     const pathname = usePathname();
     const router = useRouter();
-    const { user, logout } = useAuth();
+    
+    // isLoading дээр алдаа заахгүй байх үүднээс төрлийг нь 'any' гэж зааж өгч болно
+    const { user, logout, isAuthenticated, isLoading } = useAuth() as any; 
+    
+    const [mounted, setMounted] = useState(false);
+
+    useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    if (!mounted) return null;
 
     const menuItems = [
         { label: 'Нүүр хуудас', icon: <Home size={20} />, href: '/' },
@@ -24,95 +33,80 @@ export default function Sidebar({ isOpen, setIsOpen }: { isOpen: boolean, setIsO
         { label: 'Цутгамал байшин', icon: <Box size={20} />, href: '/calculate?type=concrete' },
     ];
 
-    const handleLogout = async () => {
-        if (confirm("Та системээс гарахдаа итгэлтэй байна уу?")) {
-            await logout();
-            setIsOpen(false);
-            router.push('/');
-        }
-    };
-
     return (
         <>
-            {/* Overlay - lg:hidden-ийг хасав, ингэснээр компьютер дээр ч ажиллана */}
             {isOpen && (
-                <div
-                    className="fixed inset-0 bg-black/50 z-[60] transition-opacity duration-300"
-                    onClick={() => setIsOpen(false)}
-                />
+                <div className="fixed inset-0 bg-black/50 z-[60]" onClick={() => setIsOpen(false)} />
             )}
 
-            {/* Sidebar Container */}
-            <aside className={`
-                fixed top-0 right-0 bottom-0 w-72 bg-white z-[70] shadow-2xl border-l border-gray-100
-                transform transition-transform duration-300 ease-in-out
-                ${isOpen ? 'translate-x-0' : 'translate-x-full'}
-            `}>
+            <aside className={`fixed top-0 right-0 bottom-0 w-80 bg-white z-[70] shadow-2xl border-l transform transition-transform duration-300 ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
                 <div className="flex flex-col h-full">
-
-                    {/* Header: relative нэмсэнээр X товч харагдана */}
-                    <div className="relative p-6 border-b border-gray-50 flex items-center">
-                        <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-blue-50 flex items-center justify-center text-blue-600">
-                                <UserCircle size={28} />
+                    {/* Header */}
+                    <div className="relative p-8 border-b flex items-center bg-gray-50/50">
+                        <div className="flex items-center gap-4 w-full">
+                            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${isAuthenticated ? 'bg-blue-100 text-blue-600' : 'bg-gray-200 text-gray-400'}`}>
+                                <UserCircle size={32} />
                             </div>
-                            <div className="overflow-hidden pr-8"> {/* X товчны зай гаргав */}
-                                <h4 className="font-bold text-gray-900 truncate">{user?.name || 'Хэрэглэгч'}</h4>
-                                <p className="text-xs text-gray-500 truncate">{user?.email || 'нэвтрээгүй'}</p>
+                            <div className="flex-1 overflow-hidden">
+                                {isLoading ? (
+                                    <div className="h-4 w-24 bg-gray-200 animate-pulse rounded" />
+                                ) : isAuthenticated && user ? (
+                                    <div className="space-y-1">
+                                        <h4 className="font-bold text-gray-900 truncate leading-none">{user.name}</h4>
+                                        <p className="text-[11px] text-gray-500 truncate">{user.phone}</p>
+                                        <div className="inline-block px-2 py-0.5 rounded-full bg-orange-100 text-orange-600 text-[10px] font-black uppercase">
+                                            Эрх: {user.calculationCredits}
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-1">
+                                        <h4 className="font-bold text-gray-900">Зочин</h4>
+                                        <Link href="/login" onClick={() => setIsOpen(false)} className="text-[11px] text-blue-600 font-bold flex items-center gap-1">
+                                            <LogIn size={12} /> Нэвтрэх
+                                        </Link>
+                                    </div>
+                                )}
                             </div>
                         </div>
-
-                        {/* X Button - Заавал харагдах ёстой хэсэг */}
-                        <button
-                            onClick={() => setIsOpen(false)}
-                            className="absolute top-5 right-4 p-2 text-gray-400 hover:text-gray-900 hover:bg-gray-100 rounded-full transition-colors z-[80]"
-                        >
+                        <button onClick={() => setIsOpen(false)} className="absolute top-6 right-4 p-2 text-gray-400 hover:text-gray-900">
                             <X size={20} />
                         </button>
                     </div>
 
-                    {/* Navigation Links */}
-                    <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+                    {/* Navigation */}
+                    <nav className="flex-1 overflow-y-auto p-5 space-y-1.5">
                         {menuItems.map((item) => {
-                            const isActive = pathname === item.href ||
-                                (pathname === '/calculate' && item.href.includes(new URLSearchParams(typeof window !== 'undefined' ? window.location.search : '').get('type') || ''));
-
+                            const isActive = pathname === item.href;
                             return (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    onClick={() => setIsOpen(false)}
-                                    className={`
-                                        flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-all
-                                        ${isActive
-                                            ? 'bg-blue-50 text-blue-600 shadow-sm shadow-blue-100'
-                                            : 'text-gray-500 hover:bg-gray-50 hover:text-gray-900'}
-                                    `}
+                                <Link 
+                                    key={item.href} 
+                                    href={item.href} 
+                                    onClick={() => setIsOpen(false)} 
+                                    className={`flex items-center gap-3 px-4 py-3.5 rounded-2xl text-sm font-bold transition-all ${isActive ? 'bg-[#0c213d] text-white shadow-lg' : 'text-gray-500 hover:bg-gray-100'}`}
                                 >
-                                    {item.icon}
-                                    {item.label}
+                                    {item.icon} {item.label}
                                 </Link>
                             );
                         })}
                     </nav>
 
                     {/* Footer */}
-                    <div className="p-4 border-t border-gray-50 space-y-1">
-                        <Link
-                            href="/settings"
-                            onClick={() => setIsOpen(false)}
-                            className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-gray-500 hover:bg-gray-50"
+                    <div className="p-5 border-t space-y-2">
+                        <Link 
+                            href="/settings" 
+                            onClick={() => setIsOpen(false)} 
+                            className="flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-gray-500 hover:bg-gray-50"
                         >
-                            <Settings size={20} />
-                            Тохиргоо
+                            <Settings size={20} /> Тохиргоо
                         </Link>
-                        <button
-                            onClick={handleLogout}
-                            className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-red-500 hover:bg-red-50 transition-colors"
-                        >
-                            <LogOut size={20} />
-                            Системээс гарах
-                        </button>
+                        {isAuthenticated && (
+                            <button 
+                                onClick={logout} 
+                                className="w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-sm font-bold text-red-500 hover:bg-red-50"
+                            >
+                                <LogOut size={20} /> Системээс гарах
+                            </button>
+                        )}
                     </div>
                 </div>
             </aside>

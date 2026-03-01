@@ -53,16 +53,19 @@ export default function Navbar({ onMenuClick }: NavbarProps) {
                             </Button>
                         </div>
                     ) : (
-                        /* Нэвтрээгүй үед харагдах хэсэг */
+                        /* Нэвтрээгүй үед харагдах хэсэг - ICON + TEXT ХАМТ */
                         <Link href="/login">
-                            <Button variant="ghost" className="flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-blue-600">
+                            <Button 
+                                variant="ghost" 
+                                className="flex items-center gap-2 px-3 py-2 text-sm font-black text-[#0c213d] hover:bg-blue-50 hover:text-blue-600 transition-all rounded-xl"
+                            >
                                 <LogIn size={18} />
-                                <span className="hidden xs:block">Нэвтрэх</span>
+                                <span>Нэвтрэх</span> 
                             </Button>
                         </Link>
                     )}
 
-                    {/* Sidebar нээх товчлуур (Нэвтрэх товчны ард байрлана) */}
+                    {/* Sidebar нээх товчлуур */}
                     <div className="pl-2 border-l border-gray-100">
                         <Button 
                             variant="ghost" 

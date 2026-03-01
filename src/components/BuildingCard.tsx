@@ -1,6 +1,5 @@
 import React from 'react';
 import { ArrowRight, Calculator, Home, Building2, LayoutGrid } from 'lucide-react'; 
-// Жишээ нь lucide-react ашиглав. Хэрэв суулгаагүй бол: npm install lucide-react
 
 interface BuildingCardProps {
     title: string;
